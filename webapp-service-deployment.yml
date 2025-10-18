@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+  labels:
+    app: webapp
+spec:
+  selector:
+    matchLabels:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - name: webapp
+        image: nanajanashia/k8s-demo-app:v1.0
+        ports:
+        - containerPort: 3000
+        env:
+        - name: USER_NAME # actually the image is expecting these env variables to connect to mongo
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-user
+        - name: USER_PWD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-password
+        - name: DB_URL
+          valueFrom:
+            configMapKeyRef:
+              name: mongo-config # this is the config file name 
+              key: mongo-url
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  type: NodePort
+  selector: 
+    app: webapp 
+  ports:
+    - protocol: TCP
+      port: 3000 
+      targetPort: 3000
+      nodePort: 30100
+     
